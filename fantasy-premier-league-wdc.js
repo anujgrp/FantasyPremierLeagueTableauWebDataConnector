@@ -2,7 +2,7 @@
     var myConnector = tableau.makeConnector();
 
     myConnector.getSchema = function (schemaCallback) {
-        var cols = [{
+        var team_cols = [{
             id: "id",
             dataType: tableau.dataTypeEnum.int
         }, {
@@ -15,28 +15,58 @@
             id: "short_name",
             dataType: tableau.dataTypeEnum.string
         }];
-
-        var tableSchema = {
+        var teamTableSchema = {
             id: "teams",
-            alias: "Team information for the 2018/19 Premier League season",
-            columns: cols
+            alias: "Teams",
+            columns: team_cols
         };
 
-        schemaCallback([tableSchema]);
+        var event_cols = [{
+            id: "id",
+            dataType: tableau.dataTypeEnum.int
+        }, {
+            id: "name",
+            dataType: tableau.dataTypeEnum.string
+        }, {
+            id: "finished",
+            dataType: tableau.dataTypeEnum.bool
+        }];
+        var eventTableSchema = {
+            id: "events",
+            alias: "Events",
+            columns: event_cols
+        };
+
+        schemaCallback([teamTableSchema, eventTableSchema]);
     };
 
     myConnector.getData = function (table, doneCallback) {
-        $.getJSON("https://fantasy.premierleague.com/drf/teams/", function(response) {
-            var tableData = [];
+        $.getJSON("https://fantasy.premierleague.com/drf/bootstrap-static", function(response) {
+            var teams = response.teams,
+                events = response.events,
+                tableData = [];
 
-            // Iterate over the JSON object
-            for (var i = 0, len = response.length; i < len; i++) {
-                tableData.push({
-                    "id": response[i].id,
-                    "code": response[i].code,
-                    "name": response[i].name,
-                    "short_name": response[i].short_name
-                });
+            var i = 0;
+
+            if (table.tableInfo.id == "teams") {
+                for (i = 0, len = teams.length; i < len; i++) {
+                    tableData.push({
+                        "id": teams[i].id,
+                        "code": teams[i].code,
+                        "name": teams[i].name,
+                        "short_name": teams[i].short_name
+                    });
+                }
+            }
+
+            if (table.tableInfo.id == "events") {
+                for (i = 0, len = events.length; i < len; i++) {
+                    tableData.push({
+                        "id": events[i].id,
+                        "name": events[i].name,
+                        "finished": events[i].finished
+                    });
+                }
             }
 
             table.appendRows(tableData);
